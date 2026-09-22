@@ -12,11 +12,17 @@ final class AppModel {
             isEnabled ? enableProtection() : disableProtection()
         }
     }
-    var comfortDegrees: Double {
-        didSet { UserDefaults.standard.set(comfortDegrees, forKey: "comfortDegrees") }
+    var comfortYawDegrees: Double {
+        didSet { UserDefaults.standard.set(comfortYawDegrees, forKey: "comfortYawDegrees") }
     }
-    var fullCoverDistanceDegrees: Double {
-        didSet { UserDefaults.standard.set(fullCoverDistanceDegrees, forKey: "fullCoverDistanceDegrees") }
+    var fullCoverYawDegrees: Double {
+        didSet { UserDefaults.standard.set(fullCoverYawDegrees, forKey: "fullCoverYawDegrees") }
+    }
+    var comfortPitchDegrees: Double {
+        didSet { UserDefaults.standard.set(comfortPitchDegrees, forKey: "comfortPitchDegrees") }
+    }
+    var fullCoverPitchDegrees: Double {
+        didSet { UserDefaults.standard.set(fullCoverPitchDegrees, forKey: "fullCoverPitchDegrees") }
     }
 
     private(set) var displayedPose = HeadPose(angleDegrees: 0, yawDegrees: 0, pitchDegrees: 0)
@@ -57,8 +63,39 @@ final class AppModel {
 
     init() {
         let defaults = UserDefaults.standard
-        comfortDegrees = min(35, max(5, defaults.object(forKey: "comfortDegrees") as? Double ?? 15))
-        fullCoverDistanceDegrees = min(30, max(5, defaults.object(forKey: "fullCoverDistanceDegrees") as? Double ?? 15))
+        if defaults.object(forKey: "comfortYawDegrees") != nil {
+            comfortYawDegrees = Self.clamp(
+                defaults.double(forKey: "comfortYawDegrees"),
+                min: 5,
+                max: 35,
+                default: 15
+            )
+            fullCoverYawDegrees = Self.clamp(
+                defaults.double(forKey: "fullCoverYawDegrees"),
+                min: 5,
+                max: 30,
+                default: 15
+            )
+            comfortPitchDegrees = Self.clamp(
+                defaults.double(forKey: "comfortPitchDegrees"),
+                min: 5,
+                max: 35,
+                default: 10
+            )
+            fullCoverPitchDegrees = Self.clamp(
+                defaults.double(forKey: "fullCoverPitchDegrees"),
+                min: 5,
+                max: 30,
+                default: 10
+            )
+        } else {
+            let legacyComfort = min(35, max(5, defaults.object(forKey: "comfortDegrees") as? Double ?? 15))
+            let legacyCover = min(30, max(5, defaults.object(forKey: "fullCoverDistanceDegrees") as? Double ?? 15))
+            comfortYawDegrees = legacyComfort
+            fullCoverYawDegrees = legacyCover
+            comfortPitchDegrees = min(legacyComfort, max(5, legacyComfort - 4))
+            fullCoverPitchDegrees = min(legacyCover, max(5, legacyCover - 4))
+        }
 
         tracker.onStatus = { [weak self] status in self?.connectionText = status }
         tracker.onOrientation = { [weak self] orientation in self?.receive(orientation) }
@@ -68,9 +105,7 @@ final class AppModel {
         if defaults.bool(forKey: "isEnabled") { isEnabled = true }
     }
 
-    var angleText: String {
-        isCentered ? String(format: "%.1f° from center", displayedPose.angleDegrees) : "Not centered"
-    }
+    var yawText: String { String(format: "%+.1f°", displayedPose.yawDegrees) }
     var pitchText: String { String(format: "%+.1f°", displayedPose.pitchDegrees) }
     var statusText: String {
         if shieldEngaged { return "Screen protected" }
@@ -208,16 +243,24 @@ final class AppModel {
             lastUIUpdateTime = orientation.timestamp
         }
 
-        let progress = HeadPoseCalculator.shieldProgress(
-            angleDegrees: pose.angleDegrees,
-            comfortDegrees: comfortDegrees,
-            fullCoverDistanceDegrees: fullCoverDistanceDegrees
+        let yawProgress = HeadPoseCalculator.shieldProgress(
+            angleDegrees: abs(pose.yawDegrees),
+            comfortDegrees: comfortYawDegrees,
+            fullCoverDistanceDegrees: fullCoverYawDegrees
         )
+        let pitchProgress = HeadPoseCalculator.shieldProgress(
+            angleDegrees: abs(pose.pitchDegrees),
+            comfortDegrees: comfortPitchDegrees,
+            fullCoverDistanceDegrees: fullCoverPitchDegrees
+        )
+        let progress = max(yawProgress, pitchProgress)
 
         switch trigger.update(
-            angleDegrees: pose.angleDegrees,
+            yawDegrees: pose.yawDegrees,
+            pitchDegrees: pose.pitchDegrees,
             timestamp: orientation.timestamp,
-            comfortDegrees: comfortDegrees
+            comfortYawDegrees: comfortYawDegrees,
+            comfortPitchDegrees: comfortPitchDegrees
         ) {
         case .clear:
             if shieldEngaged { dismissShield(requireCenter: false) }
@@ -261,6 +304,11 @@ final class AppModel {
         lastUIUpdateTime = 0
         lastOverlayUpdateTime = 0
         trigger.reset()
+    }
+
+    private static func clamp(_ value: Double, min: Double, max: Double, default defaultValue: Double) -> Double {
+        guard value > 0 else { return defaultValue }
+        return Swift.min(max, Swift.max(min, value))
     }
 
     private func disconnected() {

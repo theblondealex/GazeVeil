@@ -110,6 +110,43 @@ enum ShieldSignal: Equatable {
 }
 
 struct ShieldTrigger {
+    private var yaw = AxisShieldTrigger()
+    private var pitch = AxisShieldTrigger()
+
+    mutating func update(
+        yawDegrees: Double,
+        pitchDegrees: Double,
+        timestamp: TimeInterval,
+        comfortYawDegrees: Double,
+        comfortPitchDegrees: Double
+    ) -> ShieldSignal {
+        let yawSignal = yaw.update(
+            angleDegrees: abs(yawDegrees),
+            timestamp: timestamp,
+            comfortDegrees: comfortYawDegrees
+        )
+        let pitchSignal = pitch.update(
+            angleDegrees: abs(pitchDegrees),
+            timestamp: timestamp,
+            comfortDegrees: comfortPitchDegrees
+        )
+        if yawSignal == .engage || pitchSignal == .engage { return .engage }
+        if yawSignal == .clear && pitchSignal == .clear { return .clear }
+        return .hold
+    }
+
+    mutating func disarmUntilCentered() {
+        yaw.disarmUntilCentered()
+        pitch.disarmUntilCentered()
+    }
+
+    mutating func reset() {
+        yaw.reset()
+        pitch.reset()
+    }
+}
+
+private struct AxisShieldTrigger {
     private var crossedAt: TimeInterval?
     private var isArmed = true
 

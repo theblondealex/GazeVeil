@@ -219,20 +219,32 @@ private struct SettingsView: View {
             Form {
                 Section("Live status") {
                     LabeledContent("AirPods", value: model.connectionText)
-                    LabeledContent("Movement", value: model.angleText)
-                    LabeledContent("Vertical angle", value: model.pitchText)
+                    LabeledContent("Horizontal", value: model.yawText)
+                    LabeledContent("Vertical", value: model.pitchText)
                 }
 
-                Section("Sensitivity") {
-                    LabeledContent("Blur begins", value: "\(Int(model.comfortDegrees))°")
-                    Slider(value: $model.comfortDegrees, in: 5...35, step: 1)
-                        .accessibilityLabel("Blur begins angle")
-                        .help("How far you can turn in any direction before the screen starts to blur")
+                Section("Horizontal sensitivity") {
+                    LabeledContent("Blur begins", value: "\(Int(model.comfortYawDegrees))°")
+                    Slider(value: $model.comfortYawDegrees, in: 5...35, step: 1)
+                        .accessibilityLabel("Horizontal blur begins angle")
+                        .help("How far you can turn left or right before the screen starts to blur")
 
-                    LabeledContent("Full cover distance", value: "+\(Int(model.fullCoverDistanceDegrees))°")
-                    Slider(value: $model.fullCoverDistanceDegrees, in: 5...30, step: 1)
-                        .accessibilityLabel("Full cover distance")
-                        .help("Additional movement in any direction required for full coverage")
+                    LabeledContent("Full cover distance", value: "+\(Int(model.fullCoverYawDegrees))°")
+                    Slider(value: $model.fullCoverYawDegrees, in: 5...30, step: 1)
+                        .accessibilityLabel("Horizontal full cover distance")
+                        .help("Additional left/right movement required for full coverage")
+                }
+
+                Section("Vertical sensitivity") {
+                    LabeledContent("Blur begins", value: "\(Int(model.comfortPitchDegrees))°")
+                    Slider(value: $model.comfortPitchDegrees, in: 5...35, step: 1)
+                        .accessibilityLabel("Vertical blur begins angle")
+                        .help("How far you can look up or down before the screen starts to blur")
+
+                    LabeledContent("Full cover distance", value: "+\(Int(model.fullCoverPitchDegrees))°")
+                    Slider(value: $model.fullCoverPitchDegrees, in: 5...30, step: 1)
+                        .accessibilityLabel("Vertical full cover distance")
+                        .help("Additional up/down movement required for full coverage")
                 }
 
                 Section("Privacy") {

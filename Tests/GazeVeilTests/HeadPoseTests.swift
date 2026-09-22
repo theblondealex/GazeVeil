@@ -59,14 +59,56 @@ struct HeadPoseTests {
     func shieldTriggerDebouncesAndRearms() {
         var trigger = ShieldTrigger()
 
-        #expect(trigger.update(angleDegrees: 16, timestamp: 0, comfortDegrees: 15) == .hold)
-        #expect(trigger.update(angleDegrees: 14, timestamp: 0.08, comfortDegrees: 15) == .hold)
-        #expect(trigger.update(angleDegrees: 16, timestamp: 0.12, comfortDegrees: 15) == .hold)
-        #expect(trigger.update(angleDegrees: 16, timestamp: 0.25, comfortDegrees: 15) == .engage)
-        #expect(trigger.update(angleDegrees: 20, timestamp: 0.4, comfortDegrees: 15) == .hold)
-        #expect(trigger.update(angleDegrees: 13, timestamp: 0.5, comfortDegrees: 15) == .clear)
-        #expect(trigger.update(angleDegrees: 16, timestamp: 0.6, comfortDegrees: 15) == .hold)
-        #expect(trigger.update(angleDegrees: 16, timestamp: 0.73, comfortDegrees: 15) == .engage)
+        #expect(trigger.update(
+            yawDegrees: 16, pitchDegrees: 0, timestamp: 0,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .hold)
+        #expect(trigger.update(
+            yawDegrees: 14, pitchDegrees: 0, timestamp: 0.08,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .hold)
+        #expect(trigger.update(
+            yawDegrees: 16, pitchDegrees: 0, timestamp: 0.12,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .hold)
+        #expect(trigger.update(
+            yawDegrees: 16, pitchDegrees: 0, timestamp: 0.25,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .engage)
+        #expect(trigger.update(
+            yawDegrees: 20, pitchDegrees: 0, timestamp: 0.4,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .hold)
+        #expect(trigger.update(
+            yawDegrees: 13, pitchDegrees: 0, timestamp: 0.5,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .clear)
+        #expect(trigger.update(
+            yawDegrees: 16, pitchDegrees: 0, timestamp: 0.6,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .hold)
+        #expect(trigger.update(
+            yawDegrees: 16, pitchDegrees: 0, timestamp: 0.73,
+            comfortYawDegrees: 15, comfortPitchDegrees: 15
+        ) == .engage)
+    }
+
+    @Test("Vertical threshold can be tighter than horizontal")
+    func pitchThresholdIsIndependent() {
+        var trigger = ShieldTrigger()
+
+        #expect(trigger.update(
+            yawDegrees: 10, pitchDegrees: 0, timestamp: 0,
+            comfortYawDegrees: 15, comfortPitchDegrees: 8
+        ) == .clear)
+        #expect(trigger.update(
+            yawDegrees: 0, pitchDegrees: 9, timestamp: 0.12,
+            comfortYawDegrees: 15, comfortPitchDegrees: 8
+        ) == .hold)
+        #expect(trigger.update(
+            yawDegrees: 0, pitchDegrees: 9, timestamp: 0.25,
+            comfortYawDegrees: 15, comfortPitchDegrees: 8
+        ) == .engage)
     }
 
     @Test("Progress clamps")
